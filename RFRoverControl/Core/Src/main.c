@@ -98,10 +98,41 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  uint32_t duty = 49;
 
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, duty);
-	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, duty);
+	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
+	  {
+		  /* Ramp up forward (CH2) */
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+		  for (uint32_t i = 0; i <= 49; i++) {
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, i);
+			  HAL_Delay(10);
+		  }
+
+		  /* Forward full speed for 1 second */
+		  HAL_Delay(1000);
+
+		  /* Ramp down forward (CH2) */
+		  for (int32_t i = 49; i >= 0; i--) {
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, i);
+			  HAL_Delay(10);
+		  }
+
+		  /* Ramp up backward (CH1) */
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+		  for (uint32_t i = 0; i <= 49; i++) {
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, i);
+			  HAL_Delay(10);
+		  }
+
+		  /* Backward full speed for 1 second */
+		  HAL_Delay(1000);
+
+		  /* Ramp down backward (CH1) */
+		  for (int32_t i = 49; i >= 0; i--) {
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, i);
+			  HAL_Delay(10);
+		  }
+	  }
 
     /* USER CODE END WHILE */
 
@@ -237,11 +268,19 @@ static void MX_TIM1_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  /*Configure GPIO pin : B1_Pin */
+  GPIO_InitStruct.Pin = B1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
