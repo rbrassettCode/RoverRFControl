@@ -1,0 +1,29 @@
+# Build output
+Debug/
+Release/
+
+# IDE-specific settings (personal preferences, not portable)
+.settings/
+
+# Debug/launch configs (tied to your specific ST-Link serial number)
+*.launch
+
+# Build artifacts
+*.o
+*.d
+*.elf
+*.hex
+*.bin
+*.map
+*.srec
+*.su
+*.a
+
+# Logs & temp
+*.log
+*.bak
+.metadata/
+
+# OS files
+.DS_Store
+Thumbs.db
