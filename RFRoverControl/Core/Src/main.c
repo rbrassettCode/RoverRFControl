@@ -92,6 +92,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,8 +105,11 @@ int main(void)
 	  {
 		  /* Ramp up forward (CH2) */
 		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
 		  for (uint32_t i = 0; i <= 49; i++) {
 			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, i);
+			  HAL_Delay(10);
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, i);
 			  HAL_Delay(10);
 		  }
 
@@ -115,12 +120,17 @@ int main(void)
 		  for (int32_t i = 49; i >= 0; i--) {
 			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, i);
 			  HAL_Delay(10);
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, i);
+			  HAL_Delay(10);
 		  }
 
 		  /* Ramp up backward (CH1) */
 		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
 		  for (uint32_t i = 0; i <= 49; i++) {
 			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, i);
+			  HAL_Delay(10);
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, i);
 			  HAL_Delay(10);
 		  }
 
@@ -130,6 +140,8 @@ int main(void)
 		  /* Ramp down backward (CH1) */
 		  for (int32_t i = 49; i >= 0; i--) {
 			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, i);
+			  HAL_Delay(10);
+			  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, i);
 			  HAL_Delay(10);
 		  }
 	  }
@@ -240,6 +252,14 @@ static void MX_TIM1_Init(void)
     Error_Handler();
   }
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
   {
     Error_Handler();
   }
