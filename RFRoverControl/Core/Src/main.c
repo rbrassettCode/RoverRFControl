@@ -42,7 +42,12 @@
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
 
+UART_HandleTypeDef huart2;
+
 /* USER CODE BEGIN PV */
+uint8_t rx_byte;
+uint32_t last_rx_time;
+#define MOTOR_TIMEOUT_MS  300
 
 /* USER CODE END PV */
 
@@ -50,12 +55,26 @@ TIM_HandleTypeDef htim1;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void driveForward(){
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 49);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 49);
+}
+
+void driveStop(){
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+	  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
+}
 
 /* USER CODE END 0 */
 
@@ -89,20 +108,33 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM1_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+
+  const char diagMsg[] = "Diagnostic Run Started\r\n";
+  const char mostorStopMsg[] = "motor stop\r\n";
+
+  last_rx_time = HAL_GetTick();
+  HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  if (HAL_GetTick() - last_rx_time > MOTOR_TIMEOUT_MS) {
+		  driveStop();
+		  HAL_UART_Transmit(&huart2, (uint8_t *)mostorStopMsg, sizeof(mostorStopMsg) - 1, 100);
+	  }
+	  HAL_Delay(10);
 	  if (HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin) == GPIO_PIN_RESET)
 	  {
+
+		  HAL_UART_Transmit(&huart2, (uint8_t *)diagMsg, sizeof(diagMsg) - 1, 100);
 		  /* Ramp up forward (CH2) */
 		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
 		  __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
@@ -282,6 +314,39 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -307,6 +372,26 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+    if (huart->Instance == USART2)
+    {
+
+    	last_rx_time = HAL_GetTick();
+
+		if (rx_byte == 'w' || rx_byte == 'W')
+		{
+			driveForward();
+		}
+
+        // Re-arm the interrupt for the next reception
+        HAL_UART_Receive_IT(&huart2, &rx_byte, 1);
+    }
+}
+
+
 
 /* USER CODE END 4 */
 
